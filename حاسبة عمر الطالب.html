@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حاسبة عمر الطالب للدراسة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: auto;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        input[type="date"] {
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .result.success { background-color: #4CAF50; color: white; }
+        .result.warning { background-color: #FFC107; color: black; }
+        .result.error { background-color: #F44336; color: white; }
+        .result.info { background-color: #2196F3; color: white; }
+        
+        /* تنسيق العبارة "هل أنت متأكد" باللون الأحمر */
+        .confirmation {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #F44336; /* اللون الأحمر */
+            text-align: center;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f1f1f1; /* خلفية فاتحة */
+            transition: background-color 0.3s ease;
+        }
+
+        .confirmation:hover {
+            background-color: #e0e0e0; /* تغيير الخلفية عند التمرير */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>حاسبة عمر الطالب للدراسة</h2>
+        
+        <label for="dob">تاريخ الميلاد:</label>
+        <input type="date" id="dob" name="dob" required onchange="updateConfirmation()">
+        
+        <div id="confirmation" class="confirmation"></div>
+        
+        <label for="year">اختر السنة الدراسية:</label>
+        <select id="year" required>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+            <option value="2028">2028</option>
+        </select>
+
+        <button onclick="calculateAge()">احتساب</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        function updateConfirmation() {
+            const dob = document.getElementById("dob").value;
+            if (dob) {
+                const date = new Date(dob);
+                const hijriDate = convertToHijri(date);
+                const confirmationMessage = `هل أنت متأكد من أن الطالب من مواليد ${date.toLocaleDateString('ar-SA')}  هجري`;
+                document.getElementById("confirmation").innerText = confirmationMessage;
+            } else {
+                document.getElementById("confirmation").innerText = '';
+            }
+        }
+
+        function convertToHijri(date) {
+            const gregorian = new Date(date);
+            const hijri = new Date(gregorian.getFullYear(), gregorian.getMonth(), gregorian.getDate());
+            
+            // تحويل التاريخ الميلادي إلى هجري بشكل تقريبي
+            let hijriYear = gregorian.getFullYear() - 622;
+            let hijriMonth = gregorian.getMonth() + 1; // الهجري يبدأ من 1 وليس من 0
+            let hijriDay = gregorian.getDate();
+            
+            // باستخدام الفارق بين الهجري والميلادي
+            const diffDays = (gregorian - new Date(622, 6, 16)) / (1000 * 3600 * 24);
+            const hijriDays = Math.floor(diffDays / 354.36); // 354.36 هو المتوسط لعدد أيام السنة الهجرية
+            
+            hijriYear += hijriDays;
+            hijriMonth = Math.floor((hijriDays % 354.36) / 29.5) + 1; // تحويل الأيام إلى شهور هجري
+            hijriDay = Math.floor((hijriDays % 354.36) % 29.5) + 1;
+            
+            return `${hijriDay}/${hijriMonth}/${hijriYear}`;
+        }
+
+        function calculateAge() {
+            const dob = document.getElementById("dob").value;
+            const selectedYear = document.getElementById("year").value;
+            
+            if (!dob || !selectedYear) {
+                alert("يرجى إدخال جميع البيانات المطلوبة.");
+                return;
+            }
+            
+            // تحويل تاريخ الميلاد إلى كائن تاريخ
+            const birthDate = new Date(dob);
+            const currentDate = new Date(selectedYear, 7, 24); // بداية السنة الدراسية (24 أغسطس)
+            
+            // حساب الفرق بالأيام
+            const diffTime = currentDate - birthDate;
+            const diffDays = Math.floor(diffTime / (1000 * 3600 * 24));
+
+            // تحديد الرسالة بناءً على العمر
+            let message = '';
+            let messageClass = '';
+
+            if (diffDays >= 8383) {
+                message = "الطالب أكبر من السن النظامي";
+                messageClass = 'error';
+            } else if (diffDays >= 2100) {
+                message = "الصف الأول الابتدائي بلا شروط";
+                messageClass = 'success';
+            } else if (diffDays >= 2008) {
+                message = "الصف الأول الابتدائي بشرط حصوله على روضة معتمدة";
+                messageClass = 'info';
+            } else if (diffDays >= 1825) {
+                message = "المستوى الثالث تمهيدي";
+                messageClass = 'warning';
+            } else if (diffDays >= 1460) {
+                message = "المستوى الثاني بحسب وجود شواغر في الروضة";
+                messageClass = 'warning';
+            } else if (diffDays >= 1095) {
+                message = "المستوى الأول في المدارس الخاصة فقط";
+                messageClass = 'warning';
+            } else {
+                message = "للأسف الطالب أقل من السن القانوني";
+                messageClass = 'error';
+            }
+
+            // عرض النتيجة
+            const resultElement = document.getElementById("result");
+            resultElement.className = `result ${messageClass}`;
+            resultElement.innerText = message;
+        }
+    </script>
+
+</body>
+</html>
